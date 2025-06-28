@@ -112,11 +112,11 @@ class BottleManager: ObservableObject {
         let fm = FileManager.default
         let bottlesDir = URL.applicationSupportDirectory.appendingPathComponent("Converge/Bottles", isDirectory: true)
         
-        guard let contents = try? fm.contentsOfDirectory(at: bottlesDir, includingPropertiesForKeys: nil) else {
+        guard let contents = try? fm.contentsOfDirectory(at: bottlesDir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else {
             return []
         }
         
-        return contents.compactMap { url in
+        return contents.filter({$0.hasDirectoryPath}).compactMap { url in
             guard let name = url.lastPathComponent.removingPercentEncoding else { return nil }
             return Bottle(name: name)
         }
