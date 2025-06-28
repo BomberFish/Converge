@@ -14,7 +14,7 @@ struct BottleView: View {
         VStack {
             List {
                 Section {
-                    NavigationLink(destination: EnvironmentView(bottle: bottle)) {
+                    NavigationLink(destination: BottleSettingsView(bottle: bottle)) {
                         HStack {
                             Label("Bottle Configuration", systemImage: "gearshape.2")
                             Spacer()
@@ -40,7 +40,7 @@ struct BottleView: View {
             switch res {
             case .success(let url):
                 Task (priority: .background) {
-                    try? await WineRunner.runWine(cmdline: url.path, bottle: bottle)
+                    try? await WineRunner.runWine(cmdline: [url.path], bottle: bottle)
                 }
             case .failure(let error):
                 print("Error running file: \(error.localizedDescription)")

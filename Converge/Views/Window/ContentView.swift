@@ -130,7 +130,7 @@ struct ContentView: View {
         showCreationSheet = false
         if runCfgImmediately {
             Task(priority: .background) {
-                try? await WineRunner.runWine(cmdline: "winecfg", bottle: selectedBottle)
+                try? await WineRunner.runWine(cmdline: ["winecfg"], bottle: selectedBottle)
             }
         }
     }
