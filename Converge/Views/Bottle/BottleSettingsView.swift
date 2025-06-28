@@ -79,6 +79,7 @@ struct BottleSettingsView: View {
                                 .textFieldStyle(.squareBorder)
                         }
                         .onChange(of: versionFocused) {
+                            if versionFocused { return }
                             Task { @MainActor in
                                 preventingRegistryRacism = true
                                 try? await BottleManager.shared.setRegistryValue(
@@ -238,6 +239,7 @@ struct EnvTextField: View {
                 .focused($focused)
                 .textFieldStyle(.squareBorder)
                 .onChange(of: focused) {
+                    if focused { return }
                     try? BottleManager.shared.addEnvironmentVariable(
                         variable,
                         value: value,

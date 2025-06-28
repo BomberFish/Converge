@@ -35,6 +35,7 @@ struct BottleView: View {
                 }
             }
         }
+        .navigationTitle(bottle.name)
         .padding()
         .fileImporter(isPresented: $showExeImporter, allowedContentTypes: [.init(filenameExtension: "exe") ?? .item], onCompletion: {res in
             switch res {
