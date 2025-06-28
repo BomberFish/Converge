@@ -7,6 +7,24 @@
 
 import SwiftUI
 
+struct Version: Identifiable, Hashable {
+    var id: String { version + "." + build }
+    var name: String
+    var version: String
+    var build: String
+}
+
+let versions: [Version] = [
+    .init(name: "Windows 11", version: "10.0", build: "22000"),
+    .init(name: "Windows 10", version: "10.0", build: "19045"),
+    .init(name: "Windows 8.1", version: "6.3", build: "9600"),
+    .init(name: "Windows 8", version: "6.2", build: "9200"),
+    .init(name: "Windows 7", version: "6.1", build: "7601"),
+    .init(name: "Windows Vista", version: "6.0", build: "6002"),
+    .init(name: "Windows XP", version: "5.1", build: "2600"),
+    .init(name: "Windows 2000", version: "5.0", build: "2195")
+]
+
 struct BottleSettingsView: View {
     public var bottle: Bottle
     @ObservedObject var mgr = BottleManager.shared
@@ -16,7 +34,8 @@ struct BottleSettingsView: View {
     @State var build: String = ""
     @FocusState private var versionFocused: Bool
     
-    @State var version: String = "10.0"
+    @State var version: Version = versions[0]
+    
     
     // whether we are currently accessing or editing the registry. prevents race conditions
     @State var preventingRegistryRacism: Bool = true
@@ -30,13 +49,9 @@ struct BottleSettingsView: View {
                             Text("Windows Version")
                             Spacer()
                             Picker("Version", selection: $version) {
-                                Text("Windows 10/11").tag("10.0")
-                                Text("Windows 8.1").tag("6.3")
-                                Text("Windows 8").tag("6.2")
-                                Text("Windows 7").tag("6.1")
-                                Text("Windows Vista").tag("6.0")
-                                Text("Windows XP").tag("5.1")
-                                Text("Windows 2000").tag("5.0")
+                                ForEach(versions, id: \.self) { ver in
+                                    Text(ver.name).tag(ver)
+                                }
                             }
                         }
                         .pickerStyle(.menu)
@@ -48,24 +63,32 @@ struct BottleSettingsView: View {
                                 try? await BottleManager.shared.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentVersion",
-                                    value: version,
+                                    value: version.version,
                                     type: .string,
                                     bottle: bottle
                                 )
                                 try? await BottleManager.shared.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentMajorVersionNumber",
-                                    value: String(version.split(separator: ".").first ?? ""),
+                                    value: String(version.version.split(separator: ".").first ?? ""),
                                     type: .dword,
                                     bottle: bottle
                                 )
                                 try? await BottleManager.shared.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentMinorVersionNumber",
-                                    value: String(version.split(separator: ".").last ?? ""),
+                                    value: String(version.version.split(separator: ".").last ?? ""),
                                     type: .dword,
                                     bottle: bottle
                                 )
+                                try? await BottleManager.shared.setRegistryValue(
+                                    "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
+                                    name: "CurrentBuild",
+                                    value: version.build,
+                                    type: .string,
+                                    bottle: bottle
+                                )
+                                build = version.build
                                 preventingRegistryRacism = false
                             }
                         }
@@ -77,6 +100,7 @@ struct BottleSettingsView: View {
                                 .focused($versionFocused)
                                 .frame(width: 100)
                                 .textFieldStyle(.squareBorder)
+                                .disabled(preventingRegistryRacism)
                         }
                         .onChange(of: versionFocused) {
                             if versionFocused { return }
@@ -169,12 +193,17 @@ struct BottleSettingsView: View {
                 bottle: bottle
             )) ?? ""
             try? await Task.sleep(for: .milliseconds(100))
-            version = (try? await BottleManager.shared.getRegistryValue(
+            let kernelVer = (try? await BottleManager.shared.getRegistryValue(
                 "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                 name: "CurrentVersion",
                 type: .string,
                 bottle: bottle
             )) ?? "10.0"
+            if kernelVer == "10.0" && Double(build) ?? 0.0 >= 22000 {
+                version = versions[0]
+            } else {
+                version = versions.first(where: { $0.version == kernelVer }) ?? versions[0]
+            }
             try? await Task.sleep(for: .milliseconds(100))
             preventingRegistryRacism = false
         }
