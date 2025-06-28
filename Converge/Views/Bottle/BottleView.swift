@@ -37,7 +37,7 @@ struct BottleView: View {
         }
         .navigationTitle(bottle.name)
         .padding()
-        .fileImporter(isPresented: $showExeImporter, allowedContentTypes: [.init(filenameExtension: "exe") ?? .item], onCompletion: {res in
+        .fileImporter(isPresented: $showExeImporter, allowedContentTypes: [.init(filenameExtension: "exe"), .init(filenameExtension: "bat")].map({$0 ?? .item}), onCompletion: {res in
             switch res {
             case .success(let url):
                 Task (priority: .background) {
