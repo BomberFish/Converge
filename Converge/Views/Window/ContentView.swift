@@ -52,9 +52,12 @@ struct ContentView: View {
         VStack {
             Text("Create a new bottle")
                 .font(.title)
-            TextField("Bottle Name", text: $newBottleName)
-                .textFieldStyle(.roundedBorder)
-                .padding()
+//            VStack(alignment: .leading) {
+//                Text("Bottle name:")
+                TextField("My Cool Bottle", text: $newBottleName)
+                    .textFieldStyle(.roundedBorder)
+                    .padding()
+//            }
             Toggle("Run configuration after creation", isOn: $runCfgImmediately)
                 .padding()
             HStack {

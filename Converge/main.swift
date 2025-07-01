@@ -26,7 +26,7 @@ var modelIdentifier: String {
     }
     return "Unknown"
 }
-
+    
 var processorName: String {
     var size: size_t = 0
     sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)

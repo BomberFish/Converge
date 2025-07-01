@@ -30,6 +30,7 @@ struct BottleSettingsView: View {
     @ObservedObject var mgr = BottleManager.shared
     
     @State var retinaOn: Bool = false
+    @State var metalFxOn: Bool = false
     
     @State var build: String = ""
     @FocusState private var versionFocused: Bool
@@ -156,6 +157,33 @@ struct BottleSettingsView: View {
                         if let device = MTLCreateSystemDefaultDevice(), device.supportsRaytracing {
                             EnvSwitch(label: "DirectX Raytracing", variable: "D3DM_SUPPORT_DXR", bottle: bottle)
                         }
+                        if #available(macOS 16.0, *) {
+//                            EnvSwitch(label: "DLSS Support", variable: "D3DM_ENABLE_METALFX", bottle: bottle)
+                            HStack {
+                                Text("DLSS Support")
+                                Spacer()
+                                Toggle("DLSS Support", isOn: $metalFxOn)
+                                    .onChange(of: metalFxOn) {
+                                        try? BottleManager.shared.addEnvironmentVariable(
+                                            "D3DM_ENABLE_METALFX",
+                                            value: metalFxOn ? "1" : "0",
+                                            to: bottle
+                                        )
+                                        try? BottleManager.shared.addDllOverride(
+                                            name: "nvngx",
+                                            to: bottle
+                                        )
+                                        try? BottleManager.shared.addDllOverride(
+                                            name: "nvapi64",
+                                            to: bottle
+                                        )
+                                        metalFxOn = (BottleManager.shared.getEnvironmentVariable(
+                                            "D3DM_ENABLE_METALFX", for: bottle) == "1") || ((BottleManager.shared.getDllOverrides(for: bottle)).contains(where: {$0 == "nvngx" || $0 == "nvapi64"}))
+                                    }
+                                    .toggleStyle(.switch)
+                                    .labelsHidden()
+                            }
+                        }
                         EnvSwitch(label: "Advertise AVX support", variable: "ROSETTA_ADVERTISE_AVX", bottle: bottle)
                     }.insetGroupedStyle(header: Label("Apple Silicon", systemImage: "cpu"))
 #endif
@@ -180,6 +208,8 @@ struct BottleSettingsView: View {
         }
         .padding()
         .task {
+            metalFxOn = (BottleManager.shared.getEnvironmentVariable(
+                "D3DM_ENABLE_METALFX", for: bottle) == "1") || ((BottleManager.shared.getDllOverrides(for: bottle)).contains(where: {$0 == "nvngx" || $0 == "nvapi64"}))
             retinaOn = (try? await BottleManager.shared.getRegistryValue(
                 "HKCU\\Software\\Wine\\Mac Driver",
                 name: "RetinaMode", type: .string,

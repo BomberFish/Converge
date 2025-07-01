@@ -146,6 +146,22 @@ class BottleManager: ObservableObject {
         try data.write(to: bottle.environmentPath)
     }
     
+    /// Removes an environment variable from the specified bottle
+    func delEnvironmentVariable(key: String, from bottle: Bottle) throws {
+        var currentEnv: [String: String] = [:]
+        if FileManager.default.fileExists(atPath: bottle.environmentPath.path) {
+            if let plistData = try? Data(contentsOf: bottle.environmentPath),
+               let plistEnv = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: String] {
+                currentEnv = plistEnv
+            }
+        }
+        
+        currentEnv.removeValue(forKey: key)
+        
+        let data = try PropertyListSerialization.data(fromPropertyList: currentEnv, format: .xml, options: 0)
+        try data.write(to: bottle.environmentPath)
+    }
+    
     /// Adds an environment variable to the specified bottle.
     func addEnvironmentVariable(_ key: String, value: String, to bottle: Bottle) throws {
         try setEnvironment(for: bottle, env: [key: value])
@@ -168,6 +184,33 @@ class BottleManager: ObservableObject {
     /// Retrieves a specific environment variable for the specified bottle.
     func getEnvironmentVariable(_ key: String, for bottle: Bottle) -> String? {
         getEnvironment(for: bottle)[key]
+    }
+    
+    func getDllOverrides(for bottle: Bottle) -> [String] {
+        var overrides = [String]()
+        if let overridesRaw = getEnvironmentVariable("WINEDLLOVERRIDES", for: bottle) {
+            overrides = overridesRaw.components(separatedBy: "=")[0].components(separatedBy: ",")
+        }
+        return overrides
+    }
+    
+    func setDllOverrides(for bottle: Bottle, dlls: [String]) throws {
+        let string = dlls.joined(separator: ",") + "=builtin,native"
+        try addEnvironmentVariable("WINEDLLOVERRIDES", value: string, to: bottle)
+    }
+    
+    func addDllOverride(name: String, to bottle: Bottle) throws {
+        var overrides = getDllOverrides(for: bottle)
+        if !overrides.contains(name) {
+            overrides.append(name)
+        }
+        try setDllOverrides(for: bottle, dlls: overrides)
+    }
+    
+    func delDllOverride(name: String, from bottle: Bottle) throws {
+        var overrides = getDllOverrides(for: bottle)
+        overrides.removeAll { $0 == name }
+        try setDllOverrides(for: bottle, dlls: overrides)
     }
     
     /// Retrieves a registry value for the specified path in the bottle.
