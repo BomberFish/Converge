@@ -147,7 +147,7 @@ Packages
 .build/
 xcuserdata
 DerivedData/
-*.xcodeproj
+# *.xcodeproj
 
 
 # Code Injection
