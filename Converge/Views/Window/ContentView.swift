@@ -65,14 +65,7 @@ struct ContentView: View {
                 Button("Cancel", role: .cancel) {
                     showCreationSheet = false
                 }
-                
-                Group {
-                    if #available(macOS 16.0, *) {
-                        Button("Create", role: .confirm, action: create)
-                    } else {
-                        Button("Create", action: create)
-                    }
-                }
+                Button("Create", action: create)
                 .disabled(newBottleName.isEmpty || bottleMgr.bottles.contains(where: { $0.name == newBottleName }))
             }
         }

@@ -124,7 +124,8 @@ class BottleManager: ObservableObject {
     
     /// Deletes the specified bottle and its associated files.
     func delete(_ bottle: Bottle) async throws {
-        try? await WineRunner.runWine(cmdline: ["wineboot", "--shutdown"], bottle: bottle, wait: true)
+        // for some reason @discardableResult didn't have any effect?
+        _ = try? await WineRunner.runWine(cmdline: ["wineboot", "--shutdown"], bottle: bottle, wait: true)
         
         try FileManager.default.removeItem(at: bottle.path)
         bottles.removeAll { $0.id == bottle.id }

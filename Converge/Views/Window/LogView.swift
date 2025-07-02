@@ -33,7 +33,7 @@ struct LogView: View {
                 .padding(.horizontal)
                 .padding(.bottom)
             }
-            .onChange(of: logs.all) { _ in
+            .onChange(of: logs.all) {
                 DispatchQueue.main.async { scroll(sc) }
             }
             .onAppear {
