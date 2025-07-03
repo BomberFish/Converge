@@ -27,10 +27,10 @@ struct BottleView: View {
             
             HStack {
                 Spacer()
-                Button("Open C: Drive") {
+                Button("Open C: Drive", systemImage: "internaldrive") {
                     NSWorkspace.shared.open(bottle.path.appendingPathComponent("drive_c"))
                 }
-                Button("Run .exe") {
+                Button("Run .exe", systemImage: "apple.terminal") {
                     showExeImporter.toggle()
                 }
             }
