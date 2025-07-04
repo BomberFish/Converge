@@ -10,9 +10,32 @@ import SwiftUI
 struct BottleView: View {
     public var bottle: Bottle
     @State private var showExeImporter: Bool = false
+    @State var steamExists = false
     var body: some View {
+        let steamPath = bottle.path.appendingPathComponent("drive_c/Program Files (x86)/Steam/steam.exe")
         VStack {
             List {
+                // https://docs.getwhisky.app/steam.html
+                if steamExists {
+                    Section {
+                        Group {
+                            Button("Fix Steam") {
+                                Task {
+                                    try? await WineRunner.runWine(cmdline: [steamPath.path(percentEncoded: false), "-forcesteamupdate", "-forcepackagedownload", "-overridepackageurl", "http://web.archive.org/web/20250306194830if_/media.steampowered.com/client", "-exitsteam"], bottle: bottle)
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            Button("Run Steam") {
+                                Task {
+                                    try? await WineRunner.runWine(cmdline: [steamPath.path(percentEncoded: false), "-noverifyfiles", "-nobootstrapupdate", "-skipinitialbootstrap", "-norepairfiles", "-overridepackageurl"], bottle: bottle)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .controlSize(.large)
+                        .frame(maxWidth: .infinity)
+                    }.insetGroupedStyle(header: Label("Steam", systemImage: "gamecontroller"))
+                }
                 Section {
                     NavigationLink(destination: BottleSettingsView(bottle: bottle)) {
                         HStack {
@@ -22,7 +45,7 @@ struct BottleView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                }.insetGroupedStyle(header: Text("Configuration"))
+                }.insetGroupedStyle(header: Label("Configuration", systemImage: "gear"))
             }
             
             HStack {
@@ -47,6 +70,9 @@ struct BottleView: View {
                 print("Error running file: \(error.localizedDescription)")
             }
         })
+        .onAppear {
+            steamExists = FileManager.default.fileExists(atPath: steamPath.path(percentEncoded: false))
+        }
 //        .navigationTitle(bottle.name)
     }
 }
