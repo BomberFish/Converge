@@ -87,8 +87,11 @@ class Logs: @unchecked Sendable, ObservableObject {
             }
         }
     }
-    
+    #if DEBUG
+    @Published private(set) var all: [Log] = [.init("Log redirection disabled for Debug builds, please check stdout", type: .error)]
+    #else
     @Published private(set) var all: [Log] = []
+    #endif
 }
 
 #Preview {

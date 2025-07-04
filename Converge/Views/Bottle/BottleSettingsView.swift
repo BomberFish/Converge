@@ -29,6 +29,8 @@ struct BottleSettingsView: View {
     public var bottle: Bottle
     @ObservedObject var mgr = BottleManager.shared
     
+    private let fm = FileManager.default
+    
     @State var retinaOn: Bool = false
     @State var metalFxOn: Bool = false
     @State var debugOn: Bool = false
@@ -62,28 +64,28 @@ struct BottleSettingsView: View {
                         .onChange(of: version) {
                             Task { @MainActor in
                                 preventingRegistryRacism = true
-                                try? await BottleManager.shared.setRegistryValue(
+                                try? await mgr.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentVersion",
                                     value: version.version,
                                     type: .string,
                                     bottle: bottle
                                 )
-                                try? await BottleManager.shared.setRegistryValue(
+                                try? await mgr.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentMajorVersionNumber",
                                     value: String(version.version.split(separator: ".").first ?? ""),
                                     type: .dword,
                                     bottle: bottle
                                 )
-                                try? await BottleManager.shared.setRegistryValue(
+                                try? await mgr.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentMinorVersionNumber",
                                     value: String(version.version.split(separator: ".").last ?? ""),
                                     type: .dword,
                                     bottle: bottle
                                 )
-                                try? await BottleManager.shared.setRegistryValue(
+                                try? await mgr.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentBuild",
                                     value: version.build,
@@ -108,14 +110,14 @@ struct BottleSettingsView: View {
                             if versionFocused { return }
                             Task { @MainActor in
                                 preventingRegistryRacism = true
-                                try? await BottleManager.shared.setRegistryValue(
+                                try? await mgr.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentBuild",
                                     value: build,
                                     type: .string,
                                     bottle: bottle
                                 )
-                                try? await BottleManager.shared.setRegistryValue(
+                                try? await mgr.setRegistryValue(
                                     "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                                     name: "CurrentBuildNumber",
                                     value: build,
@@ -131,12 +133,12 @@ struct BottleSettingsView: View {
                             Spacer()
                             Toggle("Verbose Logging", isOn: $debugOn)
                                 .onChange(of: debugOn) {
-                                    try? BottleManager.shared.addEnvironmentVariable(
+                                    try? mgr.addEnvironmentVariable(
                                         "WINEDEBUG",
                                         value: debugOn ? "+all" : "-all",
                                         to: bottle
                                     )
-                                    debugOn = BottleManager.shared.getEnvironmentVariable("WINEDEBUG", for: bottle) == "+all"
+                                    debugOn = mgr.getEnvironmentVariable("WINEDEBUG", for: bottle) == "+all"
                                 }
                                 .toggleStyle(.switch)
                                 .labelsHidden()
@@ -153,7 +155,7 @@ struct BottleSettingsView: View {
                                     if preventingRegistryRacism { return }
                                     Task {@MainActor in
                                         preventingRegistryRacism = true
-                                        try? await BottleManager.shared.setRegistryValue(
+                                        try? await mgr.setRegistryValue(
                                             "HKCU\\Software\\Wine\\Mac Driver",
                                             name: "RetinaMode",
                                             value: retinaOn ? "y" : "n",
@@ -179,24 +181,60 @@ struct BottleSettingsView: View {
                                 Spacer()
                                 Toggle("DLSS", isOn: $metalFxOn)
                                     .onChange(of: metalFxOn) {
-                                        try? BottleManager.shared.addEnvironmentVariable(
+                                        try? mgr.addEnvironmentVariable(
                                             "D3DM_ENABLE_METALFX",
                                             value: metalFxOn ? "1" : "0",
                                             to: bottle
                                         )
-                                        try? BottleManager.shared.addDllOverride(
-                                            name: "nvngx",
-                                            to: bottle
-                                        )
-                                        try? BottleManager.shared.addDllOverride(
-                                            name: "nvapi64",
-                                            to: bottle
-                                        )
-                                        metalFxOn = (BottleManager.shared.getEnvironmentVariable(
-                                            "D3DM_ENABLE_METALFX", for: bottle) == "1") || ((BottleManager.shared.getDllOverrides(for: bottle)).contains(where: {$0 == "nvngx" || $0 == "nvapi64"}))
+                                        
+                                        let dllLocation = URL.applicationSupportDirectory.appendingPathComponent("Converge/wine/lib/wine/x86_64-windows", isDirectory: true)
+                                        
+                                        if metalFxOn {
+                                            try? mgr.addDllOverride(
+                                                name: "nvngx",
+                                                to: bottle
+                                            )
+                                            try? mgr.addDllOverride(
+                                                name: "nvapi64",
+                                                to: bottle
+                                            )
+                                            do {
+                                                try fm.copyItem(at: dllLocation.appendingPathComponent("nvngx.dll", isDirectory: false), to: bottle.drive_c.appendingPathComponent("windows/system32/nvngx.dll", isDirectory: false))
+                                            } catch {
+                                                print(error)
+                                            }
+                                            do {
+                                                try fm.copyItem(at: dllLocation.appendingPathComponent("nvapi64.dll", isDirectory: false), to: bottle.drive_c.appendingPathComponent("windows/system32/nvapi64.dll", isDirectory: false))
+                                            } catch {
+                                                print(error)
+                                            }
+                                        } else {
+                                            try? mgr.delDllOverride(
+                                                name: "nvngx",
+                                                from: bottle
+                                            )
+                                            try? mgr.delDllOverride(
+                                                name: "nvapi64",
+                                                from: bottle
+                                            )
+                                            do {
+                                                try fm.removeItem(at: bottle.drive_c.appendingPathComponent("windows/system32/nvngx.dll", isDirectory: false))
+                                            } catch {
+                                                print(error)
+                                            }
+                                            do {
+                                                try fm.removeItem(at: bottle.drive_c.appendingPathComponent("windows/system32/nvapi64.dll", isDirectory: false))
+                                            } catch {
+                                                print(error)
+                                            }
+                                        }
+                                        
+                                        metalFxOn = (mgr.getEnvironmentVariable(
+                                            "D3DM_ENABLE_METALFX", for: bottle) == "1") || ((mgr.getDllOverrides(for: bottle)).contains(where: {$0 == "nvngx" || $0 == "nvapi64"}))
                                     }
                                     .toggleStyle(.switch)
                                     .labelsHidden()
+                                    .disabled(preventingRegistryRacism)
                             }
                         }
                         EnvSwitch(label: "Advertise AVX support", systemImage: "cpu", variable: "ROSETTA_ADVERTISE_AVX", bottle: bottle)
@@ -223,23 +261,23 @@ struct BottleSettingsView: View {
         }
         .padding()
         .task {
-            metalFxOn = BottleManager.shared.getEnvironmentVariable(
-                "D3DM_ENABLE_METALFX", for: bottle) == "1" || (BottleManager.shared.getDllOverrides(for: bottle)).contains(where: {$0 == "nvngx" || $0 == "nvapi64"})
-            debugOn = BottleManager.shared.getEnvironmentVariable("WINEDEBUG", for: bottle) == "+all"
-            retinaOn = (try? await BottleManager.shared.getRegistryValue(
+            metalFxOn = mgr.getEnvironmentVariable(
+                "D3DM_ENABLE_METALFX", for: bottle) == "1" || (mgr.getDllOverrides(for: bottle)).contains(where: {$0 == "nvngx" || $0 == "nvapi64"})
+            debugOn = mgr.getEnvironmentVariable("WINEDEBUG", for: bottle) == "+all"
+            retinaOn = (try? await mgr.getRegistryValue(
                 "HKCU\\Software\\Wine\\Mac Driver",
                 name: "RetinaMode", type: .string,
                 bottle: bottle
             ) ?? "n") == "y"
             try? await Task.sleep(for: .milliseconds(100)) // give the UI a chance to update
-            build = (try? await BottleManager.shared.getRegistryValue(
+            build = (try? await mgr.getRegistryValue(
                 "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                 name: "CurrentBuild",
                 type: .string,
                 bottle: bottle
             )) ?? ""
             try? await Task.sleep(for: .milliseconds(100))
-            let kernelVer = (try? await BottleManager.shared.getRegistryValue(
+            let kernelVer = (try? await mgr.getRegistryValue(
                 "HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion",
                 name: "CurrentVersion",
                 type: .string,

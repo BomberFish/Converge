@@ -12,7 +12,7 @@ struct BottleView: View {
     @State private var showExeImporter: Bool = false
     @State var steamExists = false
     var body: some View {
-        let steamPath = bottle.path.appendingPathComponent("drive_c/Program Files (x86)/Steam/steam.exe")
+        let steamPath = bottle.drive_c.appendingPathComponent("Program Files (x86)/Steam/steam.exe")
         VStack {
             List {
                 // https://docs.getwhisky.app/steam.html
@@ -51,7 +51,7 @@ struct BottleView: View {
             HStack {
                 Spacer()
                 Button("Open C: Drive", systemImage: "internaldrive") {
-                    NSWorkspace.shared.open(bottle.path.appendingPathComponent("drive_c"))
+                    NSWorkspace.shared.open(bottle.drive_c)
                 }
                 Button("Run .exe", systemImage: "apple.terminal") {
                     showExeImporter.toggle()

@@ -49,7 +49,7 @@ struct WineRunner {
         for (k, v) in env {
             cmd += "\(k)=\"\(v)\" "
         }
-        cmd += executable.path() + " "
+        cmd += "\"" + executable.path(percentEncoded: false) + "\" "
         cmd += cmdline.joined(separator: " ")
         
         print("Running command: \(cmd)")
@@ -93,6 +93,9 @@ struct Bottle: Identifiable, Hashable, Codable {
     var name: String
     var path: URL {
         URL.applicationSupportDirectory.appendingPathComponent("Converge/Bottles/\(name)", isDirectory: true)
+    }
+    var drive_c: URL {
+        path.appendingPathComponent("drive_c", isDirectory: true)
     }
     var environmentPath: URL {
         URL.applicationSupportDirectory.appendingPathComponent("Converge/Bottles/\(name)/Environment.plist", isDirectory: false)
@@ -206,7 +209,7 @@ class BottleManager: ObservableObject {
     }
     
     func setDllOverrides(for bottle: Bottle, dlls: [String]) throws {
-        let string = dlls.joined(separator: ",") + "=builtin,native"
+        let string = dlls.joined(separator: ",") + "=native,builtin"
         try addEnvironmentVariable("WINEDLLOVERRIDES", value: string, to: bottle)
     }
     
