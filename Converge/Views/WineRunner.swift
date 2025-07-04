@@ -36,14 +36,24 @@ struct WineRunner {
             }
         }
         
-        let envVars = ProcessInfo.processInfo.environment.merging(env) { (_, new) in new }
-        task.environment = envVars
+//        let envVars = ProcessInfo.processInfo.environment.merging(env) { (_, new) in new }
+        task.environment = env
         
         task.arguments = cmdline
         
+        task.qualityOfService = .userInitiated
         
-        print("Running command: \(executable.path) with arguments: \(task.arguments ?? [])")
-        print("Environment Variables: \(envVars)")
+        task.currentDirectoryURL = executable.deletingLastPathComponent()
+        
+        var cmd = ""
+        for (k, v) in env {
+            cmd += "\(k)=\"\(v)\" "
+        }
+        cmd += executable.path() + " "
+        cmd += cmdline.joined(separator: " ")
+        
+        print("Running command: \(cmd)")
+//        print("Environment Variables: \(envVars)")
         
         
         let out = Pipe()

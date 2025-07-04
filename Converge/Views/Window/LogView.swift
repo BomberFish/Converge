@@ -71,6 +71,7 @@ class Logs: @unchecked Sendable, ObservableObject {
             if let line = String(data: data, encoding: .utf8) {
                 DispatchQueue.main.async {
                     self.all.append(.init(line))
+                    self.all = Array(self.all.suffix(500))
                 }
             }
         }
@@ -81,6 +82,7 @@ class Logs: @unchecked Sendable, ObservableObject {
             if let line = String(data: data, encoding: .utf8) {
                 DispatchQueue.main.async {
                     self.all.append(.init(line, type: .error))
+                    self.all = Array(self.all.suffix(500))
                 }
             }
         }

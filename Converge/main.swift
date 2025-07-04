@@ -8,12 +8,16 @@ print("main")
 
 import Foundation
 
+
 var stdin = Pipe()
-dup2(stdin.fileHandleForWriting.fileDescriptor, STDIN_FILENO)
 var stdout = Pipe()
-dup2(stdout.fileHandleForWriting.fileDescriptor, STDOUT_FILENO)
 var stderr = Pipe()
+
+#if !DEBUG
+dup2(stdin.fileHandleForWriting.fileDescriptor, STDIN_FILENO)
+dup2(stdout.fileHandleForWriting.fileDescriptor, STDOUT_FILENO)
 dup2(stderr.fileHandleForWriting.fileDescriptor, STDERR_FILENO)
+#endif
 print("Welcome to Converge :3")
 
 var modelIdentifier: String {
