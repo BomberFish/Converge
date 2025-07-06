@@ -25,6 +25,22 @@ struct BottleView: View {
                                 }
                             }
                             .buttonStyle(.bordered)
+//                            #if DEBUG
+//                            Group {
+//                                Button("Run Steam but broken") {
+//                                    Task {
+//                                        try? await WineRunner.runWine(cmdline: [steamPath.path(percentEncoded: false)], bottle: bottle)
+//                                    }
+//                                }
+//                                //--no-sandbox --in-process-gpu --disable-gpu
+//                                Button("Run Steam but less broken") {
+//                                    Task {
+//                                        try? await WineRunner.runWine(cmdline: [steamPath.path(percentEncoded: false), "-no-sandbox", "-in-process-gpu", "-disable-gpu", "-no-cef-sandbox"], bottle: bottle)
+//                                    }
+//                                }
+//                            }
+//                            .buttonStyle(.borderedProminent)
+//                            #endif
                             Button("Run Steam") {
                                 Task {
                                     try? await WineRunner.runWine(cmdline: [steamPath.path(percentEncoded: false), "-noverifyfiles", "-nobootstrapupdate", "-skipinitialbootstrap", "-norepairfiles", "-overridepackageurl"], bottle: bottle)
