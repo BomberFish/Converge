@@ -15,6 +15,17 @@ struct BottleView: View {
         let steamPath = bottle.drive_c.appendingPathComponent("Program Files (x86)/Steam/steam.exe")
         VStack {
             List {
+                Section {
+                    NavigationLink(destination: AllProgramsView(bottle: bottle)) {
+                        HStack {
+                            Label("All Programs", systemImage: "square.grid.3x3")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }.insetGroupedStyle(header: Label("Quick Launch", systemImage: "arrow.up.right.circle"))
+                
                 // https://docs.getwhisky.app/steam.html
                 if steamExists {
                     Section {

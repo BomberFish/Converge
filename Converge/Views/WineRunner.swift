@@ -106,6 +106,8 @@ class BottleManager: ObservableObject {
     @Published var bottles: [Bottle] = BottleManager.all()
     public static let shared = BottleManager()
     
+    // MARK: General bottle management
+    
     /// Creates a new bottle with the given name.
     public func create(name: String) -> Bottle {
         let bottle = Bottle(name: name)
@@ -143,6 +145,8 @@ class BottleManager: ObservableObject {
         try FileManager.default.removeItem(at: bottle.path)
         bottles.removeAll { $0.id == bottle.id }
     }
+    
+    // MARK: Environment Variables
     
     /// Sets the environment variables for the specified bottle.
     func setEnvironment(for bottle: Bottle, env: [String: String]) throws {
@@ -199,6 +203,8 @@ class BottleManager: ObservableObject {
     func getEnvironmentVariable(_ key: String, for bottle: Bottle) -> String? {
         getEnvironment(for: bottle)[key]
     }
+
+    // MARK: DLL Overrides
     
     func getDllOverrides(for bottle: Bottle) -> [String] {
         var overrides = [String]()
@@ -226,6 +232,8 @@ class BottleManager: ObservableObject {
         overrides.removeAll { $0 == name }
         try setDllOverrides(for: bottle, dlls: overrides)
     }
+    
+    // MARK: Registry
     
     /// Retrieves a registry value for the specified path in the bottle.
     func getRegistryValue(_ path: String, name: String, type: RegistryType, bottle: Bottle) async throws -> String? {
